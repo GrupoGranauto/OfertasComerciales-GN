@@ -21,9 +21,15 @@ const KEYFILE = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 // PRODUCCIÓN: JSON completo en env
 const KEYJSON = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
+// Dataset y tabla
+const DATASET = "Ofertas_Comerciales";
+const TABLE = "vin_ofertas_consolidado";
+const PROJECT_TABLE = `${PROJECT_ID}.${DATASET}.${TABLE}`;
+
 console.log("PROJECT_ID     =>", PROJECT_ID);
 console.log("KEYFILE        =>", KEYFILE);
 console.log("KEYJSON?       =>", !!KEYJSON);
+console.log("PROJECT_TABLE  =>", PROJECT_TABLE);
 
 if (!PROJECT_ID) {
   console.error("❌ Falta GOOGLE_PROJECT_ID en variables de entorno");
@@ -31,7 +37,9 @@ if (!PROJECT_ID) {
 }
 
 if (!KEYFILE && !KEYJSON) {
-  console.error("❌ Falta alguna credencial: GOOGLE_APPLICATION_CREDENTIALS o GOOGLE_APPLICATION_CREDENTIALS_JSON");
+  console.error(
+    "❌ Falta alguna credencial: GOOGLE_APPLICATION_CREDENTIALS o GOOGLE_APPLICATION_CREDENTIALS_JSON"
+  );
   process.exit(1);
 }
 
@@ -54,7 +62,6 @@ if (KEYJSON) {
 }
 
 const bq = new BigQuery(bqConfig);
-
 
 // =============================
 // Rutas
