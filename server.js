@@ -14,34 +14,51 @@ app.use(express.json());
 // Configuración desde .env
 // =============================
 const PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
+// OJO: este ya no será ruta a archivo en producción
 const KEYFILE = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+// Nuevo: el JSON completo de la key
+const KEYJSON = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
-// Dataset y tabla (ajusta si cambian en BigQuery)
+// Dataset y tabla
 const DATASET = "Ofertas_Comerciales";
 const TABLE = "vin_ofertas_consolidado";
 const PROJECT_TABLE = `${PROJECT_ID}.${DATASET}.${TABLE}`;
 
-// Logs para verificar configuración
 console.log("PROJECT_ID     =>", PROJECT_ID);
 console.log("KEYFILE        =>", KEYFILE);
+console.log("KEYJSON?       =>", !!KEYJSON);
 console.log("PROJECT_TABLE  =>", PROJECT_TABLE);
 
 if (!PROJECT_ID) {
-  console.error("❌ Falta GOOGLE_PROJECT_ID en .env");
+  console.error("❌ Falta GOOGLE_PROJECT_ID en variables de entorno");
   process.exit(1);
 }
-if (!KEYFILE) {
-  console.error("❌ Falta GOOGLE_APPLICATION_CREDENTIALS en .env");
+
+if (!KEYFILE && !KEYJSON) {
+  console.error("❌ Falta alguna credencial: GOOGLE_APPLICATION_CREDENTIALS o GOOGLE_APPLICATION_CREDENTIALS_JSON");
   process.exit(1);
 }
 
 // =============================
 // Cliente BigQuery
 // =============================
-const bq = new BigQuery({
-  projectId: PROJECT_ID,
-  keyFilename: KEYFILE, // ./credentials/credencialesAI.json
-});
+const bqConfig = { projectId: PROJECT_ID };
+
+if (KEYJSON) {
+  // Producción: credenciales en JSON (Railway)
+  try {
+    bqConfig.credentials = JSON.parse(KEYJSON);
+  } catch (e) {
+    console.error("❌ GOOGLE_APPLICATION_CREDENTIALS_JSON no es un JSON válido");
+    process.exit(1);
+  }
+} else if (KEYFILE) {
+  // Desarrollo local: archivo físico
+  bqConfig.keyFilename = KEYFILE;
+}
+
+const bq = new BigQuery(bqConfig);
+
 
 // =============================
 // Rutas
