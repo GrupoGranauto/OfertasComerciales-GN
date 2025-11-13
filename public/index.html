@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Búsqueda Comerciales Noviembre - 2025</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="app-body font-display">
+  <div class="relative flex min-h-screen w-full flex-col">
+    <!-- HEADER -->
+    <header class="app-header flex items-center justify-between whitespace-nowrap px-6 sm:px-10 lg:px-20 py-4">
+      <div class="flex items-center gap-3 text-white">
+        <div class="header-icon">
+          <img src="./images/LogoGrupo.png" alt="Logo Grupo Granauto" />
+        </div>
+    </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="flex h-full grow flex-col">
+      <div class="px-4 py-16 sm:px-10 lg:px-20 flex flex-1 justify-center">
+        <div class="flex flex-col w-full max-w-5xl flex-1">
+          <!-- SECTION: BUSCADOR -->
+          <section
+            class="search-section flex flex-col gap-8 items-center justify-center text-center p-6 py-16 bg-cover bg-center bg-no-repeat @[480px]:gap-8 @[480px]:rounded-xl"
+            data-alt="Abstract gradient background with geometric patterns"
+          >
+            <div class="flex flex-col gap-3">
+              <h1 class="hero-title text-4xl font-bold leading-tight tracking-[-0.033em] sm:text-5xl">
+                Búsqueda de Ofertas Comerciales Noviembre - 2025
+              </h1>
+              <p class="hero-subtitle text-base font-normal leading-normal max-w-2xl mx-auto">
+                Ingrese el Número de Identificación Vehicular (VIN) para encontrar ofertas comerciales relevantes y
+                personalizadas para su vehículo.
+              </p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-xl">
+              <div class="vin-input flex w-full flex-1 items-stretch rounded-lg h-14 focus-within:ring-2">
+                <div class="vin-input-icon flex items-center justify-center pl-4">
+                  <span class="material-symbols-outlined text-2xl">pin</span>
+                </div>
+                <input
+                  id="vin-input"
+                  class="vin-input-field form-input flex w/full min-w-0 flex-1 resize-none overflow-hidden rounded-lg focus:outline-0 focus:ring-0 border-0 bg-transparent h-full px-3 text-sm font-normal leading-normal"
+                  maxlength="17"
+                  placeholder="Ingrese el VIN de 17 caracteres"
+                />
+              </div>
+
+              <button
+                id="btn-buscar"
+                class="primary-button flex w-full sm:w-auto min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 px-8 text-base font-bold leading-normal tracking-[0.015em] transition-colors"
+              >
+                <span class="truncate">Buscar Ofertas</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- SECTION: RESULTADOS -->
+          <section id="results" class="mt-16 hidden">
+            <div class="results-content flex flex-col gap-12">
+              <div>
+                <h2 class="section-title text-2xl font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5 inline-block">
+                  Oferta Principal
+                </h2>
+                <div class="mt-6">
+                  <div class="p-4 @container">
+                    <div
+                      class="card-primary flex flex-col items-stretch justify-start rounded-xl @xl:flex-row @xl:items-start shadow-[0_0_15px_rgba(0,0,0,0.2)] border"
+                    >
+                      <div class="w-full @xl:w-1/3">
+                        <img src="" alt="Imagen Oferta" class="offer-image-img">
+                      </div>
+
+                      <div class="flex w-full flex-1 flex-col items-stretch justify-center gap-2 p-8">
+                        <p class="accent-label text-sm font-bold leading-normal tracking-wide">
+                          RECOMENDADO PARA USTED
+                        </p>
+                        <p class="main-offer-title text-xl font-bold leading-tight tracking-[-0.015em]">
+                          Plan de Mantenimiento Premium
+                        </p>
+                        <p class="main-offer-description text-base font-normal leading-normal mt-1">
+                          Detalles completos de la oferta principal, incluyendo cambio de aceite sintético, rotación de
+                          neumáticos y revisión de 27 puntos.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="section-subtitle text-xl font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">
+                  Otras Ofertas Disponibles
+                </h3>
+                <div class="other-offers-grid grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <div class="p-4 @container">
+                    <div class="card-secondary flex flex-col rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.1)] border">
+                      <img src="" class="offer-secondary-img" alt="Imagen oferta secundaria">
+                      <div class="p-6">
+                        <p class="text-lg font-bold leading-tight tracking-[-0.015em] offer-secondary-title"></p>
+                        <p class="text-base font-normal leading-normal mt-1 offer-secondary-description"></p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="p-4 @container">
+                    <div class="card-secondary flex flex-col items-stretch justify-start rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.1)] border">
+                      <div class="flex w-full flex-1 flex-col items-stretch justify-center gap-1 p-6">
+                        <p class="text-lg font-bold leading-tight tracking-[-0.015em]">Servicio de Frenos</p>
+                        <p class="text-base font-normal leading-normal mt-1">
+                          Revisión y cambio de pastillas de freno.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="no-results hidden flex-col items-center justify-center text-center p-10 mt-12 rounded-xl border">
+              <span class="material-symbols-outlined text-5xl no-results-icon">search_off</span>
+              <h3 class="no-results-title text-xl font-bold mt-4">No se encontraron ofertas</h3>
+              <p class="no-results-text mt-1">
+                No se encontraron ofertas para el VIN proporcionado. Por favor, verifique el número e intente de nuevo.
+              </p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="app-footer w-full mt-auto">
+      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center">
+        <p class="footer-text text-sm">©2025 Auto Insights. Todos los derechos reservados.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- App script -->
+  <script src="./script.js"></script>
+</body>
+</html>

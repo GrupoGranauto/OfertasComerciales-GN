@@ -1,0 +1,17 @@
+{
+  "name": "vin-ofertas-api",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "API para consultar BigQuery y devolver ofertas por VIN",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@google-cloud/bigquery": "^7.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.19.2"
+  }
+}

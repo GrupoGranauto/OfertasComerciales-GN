@@ -1,0 +1,191 @@
+/* ===== Tema principal (edita estos valores) ===== */
+:root {
+  --color-bg-page:    #979797;   /* fondo general */
+  --color-header-bg:  #1C1C19;
+  --color-footer-bg:  #1C1C19;
+
+  --color-card-bg:    #1C1C19;
+  --color-border-soft:#6F6F6A;
+
+  --color-text-main:  #ffffff;
+  --color-text-muted: #9CA3AF;
+  --color-text-soft:  #D1D5DB;
+
+  --color-accent:     #493F91;   /* tu verde/gris amarillento */
+  --color-accent-hover: #51368D;
+
+  --color-noresults-bg: #2D1E3F;
+}
+
+/* ===== Layout base ===== */
+.app-body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-bg-page);
+  color: var(--color-text-main);
+  font-family: "Maven Pro", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ===== Header ===== */
+.app-header {
+  background-color: var(--color-header-bg);
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.header-title-text {
+  color: var(--color-text-main);
+}
+
+.header-icon {
+  width: 150px;     /* Ajusta el tamaño del logo */
+  height: 40px;     /* Alto de la barra */
+  display: flex;
+  align-items: center;
+}
+
+.header-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;  /* evita deformación */
+}
+
+.codigo-oferta {
+  font-family: "Courier New", monospace;
+  background: #222;
+  color: #bfc761;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  border: 1px solid #555;
+}
+
+/* ===== Hero / buscador ===== */
+.search-section,
+.background-hero {
+  background: #1C1C19 !important;
+  border-radius: 20px;
+}
+
+
+.hero-title {
+  color: var(--color-text-main);
+}
+
+.hero-subtitle {
+  color: var(--color-text-soft);
+}
+
+/* ===== Input VIN ===== */
+.vin-input {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border-soft);
+}
+
+.vin-input:focus-within {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.vin-input-icon {
+  color: var(--color-text-muted);
+}
+
+.vin-input-field {
+  color: var(--color-text-main);
+}
+
+.vin-input-field::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* ===== Botón principal ===== */
+.primary-button {
+  background-color: var(--color-accent);
+  color: var(--color-text-main);
+}
+
+.primary-button:hover {
+  background-color: var(--color-accent-hover);
+}
+
+/* ===== Tarjetas ===== */
+.card-primary,
+.card-secondary {
+  background-color: var(--color-card-bg);
+  border-color: var(--color-border-soft);
+}
+
+.accent-label {
+  color: var(--color-accent);
+}
+
+.main-offer-title {
+  color: var(--color-text-main);
+}
+
+.main-offer-description {
+  color: var(--color-text-soft);
+}
+
+/* Textos en otras ofertas */
+.card-secondary p:first-child {
+  color: var(--color-text-main);
+}
+
+.card-secondary p:last-child {
+  color: var(--color-text-muted);
+}
+
+/* Borde de sección (Oferta Principal) */
+.section-title {
+  color: var(--color-text-main);
+  border-bottom: 2px solid var(--color-accent);
+}
+
+.section-subtitle {
+  color: var(--color-text-main);
+}
+
+/* Imagen de oferta principal */
+.offer-image-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  border-radius: 12px 0 0 12px;
+}
+
+.offer-secondary-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  border-radius: 12px 12px 0 0;
+}
+
+/* ===== No results ===== */
+.no-results {
+  background-color: var(--color-noresults-bg);
+  border-color: var(--color-border-soft);
+}
+
+.no-results-icon {
+  color: var(--color-text-muted);
+}
+
+.no-results-title {
+  color: var(--color-text-main);
+}
+
+.no-results-text {
+  color: var(--color-text-muted);
+}
+
+/* ===== Footer ===== */
+.app-footer {
+  background-color: var(--color-footer-bg);
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.footer-text {
+  color: var(--color-text-muted);
+}
