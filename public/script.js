@@ -1,8 +1,6 @@
 // script.js
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ script.js cargado");
-
   const inputVIN = document.getElementById("vin-input");
   const buttonSearch = document.getElementById("btn-buscar");
 
@@ -15,11 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const otherOffersGrid = document.querySelector(".other-offers-grid");
 
   if (!inputVIN || !buttonSearch) {
-    console.error("❌ No se encontró #vin-input o #btn-buscar en el HTML");
     return;
   }
-
-  console.log("✅ Input y botón encontrados, registrando eventos...");
 
   // =====================================
   // Diccionario de descripciones
