@@ -85,9 +85,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return desc;
       }
     }
-
-    console.log("⚠️ Sin descripción para oferta:", nombre, "->", key);
-    return "";
   }
 
   // Obtiene la imagen para una oferta
@@ -155,7 +152,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Render de resultados
   // =====================================
   function renderResults(data) {
-    console.log("✅ Renderizando resultados:", data);
 
     if (resultsSection) resultsSection.classList.remove("hidden");
     if (resultsContent) resultsContent.classList.remove("hidden");
@@ -211,7 +207,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mostrar "no resultados"
   // =====================================
   function showNoResults(message) {
-    console.log("ℹ️ Mostrando 'no resultados':", message);
 
     if (resultsSection) resultsSection.classList.remove("hidden");
     if (resultsContent) resultsContent.classList.add("hidden");
@@ -226,7 +221,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Búsqueda
   // =====================================
   async function buscar() {
-    console.log("🔍 Click en buscar con VIN:", inputVIN.value);
 
     const { ok, msg, vin } = validateVIN(inputVIN.value);
     if (!ok) {
@@ -237,9 +231,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/ofertas?vin=${encodeURIComponent(vin)}`);
-
-      console.log("📡 Respuesta HTTP:", res.status);
-
       if (res.status === 404) {
         const j = await res.json().catch(() => ({}));
         showNoResults(
@@ -260,7 +251,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       renderResults(data);
     } catch (err) {
-      console.error("❌ Error al consultar /api/ofertas:", err);
       showNoResults("Ocurrió un error al consultar las ofertas.");
     } finally {
       setLoading(false);
@@ -274,6 +264,4 @@ document.addEventListener("DOMContentLoaded", () => {
   inputVIN.addEventListener("keydown", (e) => {
     if (e.key === "Enter") buscar();
   });
-
-  console.log("✅ Eventos registrados (click y Enter)");
 });
