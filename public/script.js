@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // =====================================
   const OFERTA_IMAGENES = {
     "aceleracion primer servicio": "./images/aceleracion_ps.png",
-    inactivos: "./images/Inactivos.png",
+    "inactivos": "./images/Inactivos.png",
     "retenidos en riesgo": "./images/retencion.png",
     "leales fuera garantia": "./images/leales_fg.png",
     "primer servicio": "./images/primer_servicio.png",
