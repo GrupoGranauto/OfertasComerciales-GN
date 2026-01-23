@@ -85,11 +85,12 @@ app.get("/api/ofertas", async (req, res) => {
       return res.status(400).json({ error: "vin inválido" });
     }
 
+    // ✅ Ahora también traemos status_cliente_principal
     const query = `
       SELECT
         vin,
         oferta_principal_r AS oferta_principal,
-        ofertas_r          AS ofertas
+        ofertas_r          AS ofertas,
         status_cliente_principal
       FROM \`${PROJECT_TABLE}\`
       WHERE TRIM(LOWER(vin)) = TRIM(LOWER(@vin))
@@ -117,10 +118,7 @@ app.get("/api/ofertas", async (req, res) => {
     // =============================
 
     // Puede venir como oferta_principal (alias) o directo como *_r
-    const principalRaw =
-      row.oferta_principal ??
-      row.oferta_principal_r ??
-      "";
+    const principalRaw = row.oferta_principal ?? row.oferta_principal_r ?? "";
     const principal = principalRaw.toString().trim();
 
     // Ofertas: puede venir como string, JSON, array, etc.
@@ -158,6 +156,7 @@ app.get("/api/ofertas", async (req, res) => {
       found: true,
       oferta_principal: principal || null,
       ofertas: others,
+      // ✅ Enviamos el status al frontend
       status_cliente_principal: row.status_cliente_principal || null,
     };
 
