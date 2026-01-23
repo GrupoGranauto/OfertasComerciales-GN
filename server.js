@@ -90,6 +90,7 @@ app.get("/api/ofertas", async (req, res) => {
         vin,
         oferta_principal_r AS oferta_principal,
         ofertas_r          AS ofertas
+        status_cliente_principal
       FROM \`${PROJECT_TABLE}\`
       WHERE TRIM(LOWER(vin)) = TRIM(LOWER(@vin))
       LIMIT 1`;
@@ -157,6 +158,7 @@ app.get("/api/ofertas", async (req, res) => {
       found: true,
       oferta_principal: principal || null,
       ofertas: others,
+      status_cliente_principal: row.status_cliente_principal || null,
     };
 
     return res.json(payload);
