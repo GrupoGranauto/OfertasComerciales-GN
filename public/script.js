@@ -56,13 +56,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Normaliza texto: sin acentos, minúsculas, sin espacios dobles
   function normalizarTexto(txt) {
-    return txt
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, " ");
-  }
+  return txt
+    .replace(/_/g, " ")   // 👈 ESTA LÍNEA ES LA CLAVE
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
 
   // Obtiene la descripción de una oferta por nombre
   function getDescripcionOferta(nombre) {
