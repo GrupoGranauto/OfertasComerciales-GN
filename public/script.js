@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const mainTitle = document.querySelector(".main-offer-title");
   const mainDescription = document.querySelector(".main-offer-description");
   const otherOffersGrid = document.querySelector(".other-offers-grid");
-  const statusEl = document.querySelector(".status-cliente"); // 👈 badge / texto de status
+  const statusEl = document.querySelector(".status-cliente");
 
   if (!inputVIN || !buttonSearch) return;
 
@@ -50,9 +50,8 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // =====================================
-  // Utilidades de texto
+  // Utilidades
   // =====================================
-
   function normalizarTexto(txt) {
     return String(txt || "")
       .replace(/_/g, " ")
@@ -63,55 +62,42 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/\s+/g, " ");
   }
 
-  // Nombre visible para UI
   function formatearNombreOferta(nombre) {
     const s = normalizarTexto(nombre);
     if (!s) return "";
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
-  // Leyenda por status_cliente_principal
-  function getLeyendaStatusCliente(status) {
-    if (!status) return "";
-
-    const s = status.toUpperCase().trim();
-
-    if (s === "ASISTIÓ" || s === "ASISTIO") {
-      return "Ya asistió";
-    }
-
-    if (s === "POTENCIAL") {
-      return "Potencial";
-    }
-
-    return "";
-  }
-
   function getDescripcionOferta(nombre) {
-    if (!nombre) return "";
     const key = normalizarTexto(nombre);
-
     if (OFERTA_DESCRIPCIONES[key]) return OFERTA_DESCRIPCIONES[key];
 
     for (const [pattern, desc] of Object.entries(OFERTA_DESCRIPCIONES)) {
       if (key.includes(pattern) || pattern.includes(key)) return desc;
     }
-
     return "";
   }
 
   function getImagenOferta(nombre) {
-    if (!nombre) return "./images/default.png";
-
     const key = normalizarTexto(nombre);
-
     if (OFERTA_IMAGENES[key]) return OFERTA_IMAGENES[key];
 
     for (const [pattern, img] of Object.entries(OFERTA_IMAGENES)) {
       if (key.includes(pattern) || pattern.includes(key)) return img;
     }
-
     return "./images/default.png";
+  }
+
+  function getLeyendaStatusCliente(rawStatus) {
+    const s = String(rawStatus || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toUpperCase()
+      .trim();
+
+    if (s === "ASISTIO") return "Ya asistió";
+    if (s === "POTENCIAL") return "Potencial";
+    return "";
   }
 
   function escapeHtml(s) {
@@ -127,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!texto) return "";
     return texto.replace(
       /C[oó]digo:\s*([A-Z0-9]+)/gi,
-      (match, codigo) =>
+      (_, codigo) =>
         `Código: <code class="codigo-oferta">${codigo}</code>`
     );
   }
@@ -148,14 +134,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================
-  // Render de resultados
+  // Render
   // =====================================
   function renderResults(data) {
     resultsSection?.classList.remove("hidden");
     resultsContent?.classList.remove("hidden");
     noResultsBox?.classList.add("hidden");
 
-    const nombrePrincipalRaw = data.oferta_principal || "";
+    const nombrePrincipalRaw = data?.oferta_principal || "";
     const nombrePrincipalUI = formatearNombreOferta(nombrePrincipalRaw);
     const descPrincipal = getDescripcionOferta(nombrePrincipalRaw);
 
@@ -170,10 +156,10 @@ document.addEventListener("DOMContentLoaded", () => {
         "No hay descripción disponible para esta oferta.";
     }
 
-    // 👉 Status cliente principal
+    // 🔴 LEYENDA STATUS
     if (statusEl) {
       const leyenda = getLeyendaStatusCliente(
-        data.status_cliente_principal
+        data?.status_cliente_principal
       );
       if (leyenda) {
         statusEl.textContent = leyenda;
@@ -187,22 +173,24 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!otherOffersGrid) return;
     otherOffersGrid.innerHTML = "";
 
-    if (Array.isArray(data.ofertas)) {
+    if (Array.isArray(data?.ofertas)) {
       data.ofertas.forEach((nombreOfertaRaw) => {
-        const nombreOfertaUI = formatearNombreOferta(nombreOfertaRaw);
-        const imagen = getImagenOferta(nombreOfertaRaw);
-        const descripcion =
-          getDescripcionOferta(nombreOfertaRaw) ||
-          "Oferta adicional disponible.";
-
         const card = document.createElement("div");
         card.className = "p-4 @container";
+
         card.innerHTML = `
           <div class="card-secondary flex flex-col rounded-xl shadow border">
-            <img src="${imagen}" class="offer-secondary-img" alt="Imagen Oferta">
+            <img src="${getImagenOferta(nombreOfertaRaw)}" class="offer-secondary-img" alt="Imagen Oferta">
             <div class="p-6">
-              <p class="text-lg font-bold">${escapeHtml(nombreOfertaUI)}</p>
-              <p class="text-base mt-1">${formatearCodigo(descripcion)}</p>
+              <p class="text-lg font-bold">${escapeHtml(
+                formatearNombreOferta(nombreOfertaRaw)
+              )}</p>
+              <p class="text-base mt-1">
+                ${formatearCodigo(
+                  getDescripcionOferta(nombreOfertaRaw) ||
+                    "Oferta adicional disponible."
+                )}
+              </p>
             </div>
           </div>
         `;
@@ -225,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================
-  // Búsqueda
+  // Buscar
   // =====================================
   async function buscar() {
     const { ok, msg, vin } = validateVIN(inputVIN.value);
@@ -240,7 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
           j.message || "No se encontraron ofertas para el VIN."
         );
       }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error();
 
       const data = await res.json();
       if (!data?.found)
