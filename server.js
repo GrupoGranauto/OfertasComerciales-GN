@@ -92,8 +92,7 @@ app.get("/api/ofertas", async (req, res) => {
         ofertas_r          AS ofertas
       FROM \`${PROJECT_TABLE}\`
       WHERE TRIM(LOWER(vin)) = TRIM(LOWER(@vin))
-      LIMIT 1
-    `;
+      LIMIT 1`;
 
     console.log(">> Ejecutando query sobre:", PROJECT_TABLE);
 
