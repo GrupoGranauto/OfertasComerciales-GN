@@ -1,46 +1,29 @@
-// script.js
-
 document.addEventListener("DOMContentLoaded", () => {
   const inputVIN = document.getElementById("vin-input");
   const buttonSearch = document.getElementById("btn-buscar");
-
   const resultsSection = document.querySelector("#results");
   const resultsContent = document.querySelector(".results-content");
   const noResultsBox = document.querySelector(".no-results");
-
   const mainTitle = document.querySelector(".main-offer-title");
   const mainDescription = document.querySelector(".main-offer-description");
   const otherOffersGrid = document.querySelector(".other-offers-grid");
   const statusEl = document.querySelector(".status-cliente");
-
   if (!inputVIN || !buttonSearch) return;
 
-  // =====================================
-  // Diccionario de descripciones
-  // =====================================
   const OFERTA_DESCRIPCIONES = {
     "aceleracion primer servicio":
       "Contacta al cliente con urgencia por perder garantía. Ofrece Reactivación de garantía al realizar su servicio. Código: REACTIVACION.",
-
     inactivos:
       "Recupera clientes con una oferta de entrada: Servicio VA $1,699 o Cambio de Aceite VA $999. Código: OFERTALLER.",
-
     "retenidos en riesgo":
       "Motiva una visita con la Revisión de 27 puntos + Cupón $500 para reparaciones. Código: OFERTALLER.",
-
     "servicio a tu puerta":
       "Ofrece recolección y entrega del vehículo como valor agregado. Incentivo: $100 al distribuidor. Código: VALETPARKING.",
-
     "leales fuera garantia":
       "Recompensa su lealtad con Servicio VA $1,699 y promueve upselling de mantenimientos. Código: OFERTALLER.",
-
     "primer servicio":
       "Invita al cliente a realizar su primer servicio y conservar la garantía. Beneficio: Tarjeta Amazon $500. Código: OFERTALLER.",
   };
-
-  // =====================================
-  // Diccionario de imágenes
-  // =====================================
   const OFERTA_IMAGENES = {
     "aceleracion primer servicio": "./images/aceleracion_ps.png",
     inactivos: "./images/Inactivos.png",
@@ -49,9 +32,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "primer servicio": "./images/primer_servicio.png",
   };
 
-  // =====================================
-  // Utilidades
-  // =====================================
   function normalizarTexto(txt) {
     return String(txt || "")
       .replace(/_/g, " ")
@@ -133,18 +113,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return { ok: true, vin };
   }
 
-  // =====================================
-  // Render
-  // =====================================
   function renderResults(data) {
     resultsSection?.classList.remove("hidden");
     resultsContent?.classList.remove("hidden");
     noResultsBox?.classList.add("hidden");
-
     const nombrePrincipalRaw = data?.oferta_principal || "";
     const nombrePrincipalUI = formatearNombreOferta(nombrePrincipalRaw);
     const descPrincipal = getDescripcionOferta(nombrePrincipalRaw);
-
     const imgOferta = document.querySelector(".offer-image-img");
     if (imgOferta) imgOferta.src = getImagenOferta(nombrePrincipalRaw);
 
@@ -156,7 +131,6 @@ document.addEventListener("DOMContentLoaded", () => {
         "No hay descripción disponible para esta oferta.";
     }
 
-    // 🔴 LEYENDA STATUS
     if (statusEl) {
       const leyenda = getLeyendaStatusCliente(
         data?.status_cliente_principal
@@ -199,9 +173,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // =====================================
-  // No resultados
-  // =====================================
   function showNoResults(message) {
     resultsSection?.classList.remove("hidden");
     resultsContent?.classList.add("hidden");
@@ -212,9 +183,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // =====================================
-  // Buscar
-  // =====================================
   async function buscar() {
     const { ok, msg, vin } = validateVIN(inputVIN.value);
     if (!ok) return showNoResults(msg);
@@ -242,9 +210,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // =====================================
-  // Eventos
-  // =====================================
   buttonSearch.addEventListener("click", buscar);
   inputVIN.addEventListener("keydown", (e) => {
     if (e.key === "Enter") buscar();
