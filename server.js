@@ -1,6 +1,7 @@
 // server.js
 // API: GET /api/ofertas?vin=XXXXXXXXXXXXXXXXX (17 caracteres)
 // Protegido por Google Sign-In (solo @grupogranauto.mx)
+// ✅ Registra uso en BigQuery: base-maestra-gn.Ofertas_Comerciales.control_usuarios
 
 import "dotenv/config";
 import express from "express";
@@ -47,8 +48,6 @@ app.use(
 // =============================
 // CORS (si sirves frontend desde el mismo server, puedes quitarlo)
 // =============================
-// Si tu frontend está en el mismo dominio/puerto, cors() no es necesario.
-// Si lo necesitas (frontend separado), limita el origin en .env con FRONTEND_ORIGIN.
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "";
 if (FRONTEND_ORIGIN) {
   app.use(
@@ -58,7 +57,6 @@ if (FRONTEND_ORIGIN) {
     })
   );
 } else {
-  // fallback (dev). Puedes comentar esto en prod si no lo necesitas.
   app.use(cors());
 }
 
@@ -78,10 +76,14 @@ const DATASET = "Ofertas_Comerciales";
 const TABLE = "vin_ofertas_consolidado";
 const PROJECT_TABLE = `${PROJECT_ID}.${DATASET}.${TABLE}`;
 
+// ✅ NUEVO: tabla control usuarios
+const CONTROL_TABLE = `${PROJECT_ID}.${DATASET}.control_usuarios`;
+
 console.log("PROJECT_ID     =>", PROJECT_ID);
 console.log("KEYFILE        =>", KEYFILE);
 console.log("KEYJSON?       =>", !!KEYJSON);
 console.log("PROJECT_TABLE  =>", PROJECT_TABLE);
+console.log("CONTROL_TABLE  =>", CONTROL_TABLE);
 
 if (!PROJECT_ID) {
   console.error("❌ Falta GOOGLE_PROJECT_ID en variables de entorno");
@@ -101,7 +103,6 @@ if (!KEYFILE && !KEYJSON) {
 const bqConfig = { projectId: PROJECT_ID };
 
 if (KEYJSON) {
-  // Producción: el contenido del JSON en una variable
   try {
     bqConfig.credentials = JSON.parse(KEYJSON);
   } catch (e) {
@@ -109,7 +110,6 @@ if (KEYJSON) {
     process.exit(1);
   }
 } else {
-  // Desarrollo local: archivo físico
   bqConfig.keyFilename = KEYFILE;
 }
 
@@ -167,6 +167,25 @@ function authRequired(req, res, next) {
 }
 
 // =============================
+// ✅ NUEVO: Registrar uso en BigQuery
+// =============================
+async function logUso({ email, nombre }) {
+  const q = `
+    INSERT INTO \`${CONTROL_TABLE}\` (email, nombre, uso, fecha, fecha_hora)
+    VALUES (@email, @nombre, 1, CURRENT_DATE(), CURRENT_TIMESTAMP())
+  `;
+
+  // Nota: createQueryJob es async, pero no necesitas leer resultados
+  await bq.createQueryJob({
+    query: q,
+    params: {
+      email: String(email || "").toLowerCase(),
+      nombre: String(nombre || ""),
+    },
+  });
+}
+
+// =============================
 // Rutas
 // =============================
 
@@ -179,10 +198,20 @@ app.get("/api/me", authRequired, (req, res) => {
 });
 
 // ✅ GET /api/ofertas?vin=XXXXXXXXXXXXXXXXX (PROTEGIDO)
+// ✅ Registra uso al momento de "Buscar Ofertas"
 app.get("/api/ofertas", authRequired, async (req, res) => {
   try {
     const vin = (req.query.vin || "").toString().trim();
     console.log(">> /api/ofertas llamado con VIN:", vin, "by:", req.user?.email);
+
+    // ✅ Registrar uso (si falla no bloquea la respuesta)
+    // Si quieres registrar SOLO cuando el VIN sea válido, mueve este bloque
+    // después de las validaciones.
+    try {
+      await logUso({ email: req.user?.email, nombre: req.user?.name });
+    } catch (e) {
+      console.error("⚠️ No se pudo registrar en control_usuarios:", e);
+    }
 
     if (!vin) {
       return res.status(400).json({ error: "vin requerido" });

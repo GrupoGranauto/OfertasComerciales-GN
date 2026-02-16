@@ -31,10 +31,8 @@ window.handleCredentialResponse = async function (response) {
     const idToken = response?.credential;
     if (!idToken) throw new Error("No credential");
 
-    // Guarda token
     setToken(idToken);
 
-    // Valida contra backend (aquí se filtra dominio)
     const res = await fetch("/api/me", {
       method: "GET",
       headers: {
@@ -44,25 +42,23 @@ window.handleCredentialResponse = async function (response) {
     });
 
     const me = await res.json().catch(() => ({}));
+
     if (!res.ok) {
-      // Forzar limpieza
       setToken("");
       setCachedUser(null);
 
-      // Mostrar error claro (403 = dominio no permitido)
       const msg =
         me?.error ||
         (res.status === 403
           ? "Dominio no permitido. Usa tu cuenta @grupogranauto.mx"
           : "No autorizado. Verifica tu cuenta.");
       alert(msg);
-
       return;
     }
 
     setCachedUser(me);
 
-    // Refresca para que la UI se desbloquee y cierre el modal
+    // Simple: recarga para re-render y desbloqueo
     location.reload();
   } catch (err) {
     console.error("handleCredentialResponse error:", err);
@@ -73,7 +69,25 @@ window.handleCredentialResponse = async function (response) {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  // ====== ELEMENTOS AUTH UI ======
+  // =========================
+  // ELEMENTOS (Ofertas) — DECLARAR PRIMERO
+  // =========================
+  const inputVIN = document.getElementById("vin-input");
+  const buttonSearch = document.getElementById("btn-buscar");
+
+  const resultsSection = document.querySelector("#results");
+  const resultsContent = document.querySelector(".results-content");
+  const noResultsBox = document.querySelector(".no-results");
+  const mainTitle = document.querySelector(".main-offer-title");
+  const mainDescription = document.querySelector(".main-offer-description");
+  const otherOffersGrid = document.querySelector(".other-offers-grid");
+  const statusEl = document.querySelector(".status-cliente");
+
+  if (!inputVIN || !buttonSearch) return;
+
+  // =========================
+  // ELEMENTOS AUTH UI
+  // =========================
   const authModal = document.getElementById("auth-modal");
   const appWrap = document.getElementById("app-wrap");
   const btnLogout = document.getElementById("btn-logout");
@@ -95,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
     inputVIN.disabled = locked;
     buttonSearch.disabled = locked;
     permHint?.classList.toggle("hidden", !locked);
+
     if (locked) openAuthModal();
     else closeAuthModal();
   }
@@ -132,7 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const res = await fetch(url, { ...options, headers });
 
-    // Si token inválido/expirado o dominio no permitido
     if (res.status === 401 || res.status === 403) {
       setToken("");
       setCachedUser(null);
@@ -175,17 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================
   // TU CÓDIGO (Ofertas)
   // =========================
-  const inputVIN = document.getElementById("vin-input");
-  const buttonSearch = document.getElementById("btn-buscar");
-  const resultsSection = document.querySelector("#results");
-  const resultsContent = document.querySelector(".results-content");
-  const noResultsBox = document.querySelector(".no-results");
-  const mainTitle = document.querySelector(".main-offer-title");
-  const mainDescription = document.querySelector(".main-offer-description");
-  const otherOffersGrid = document.querySelector(".other-offers-grid");
-  const statusEl = document.querySelector(".status-cliente");
-  if (!inputVIN || !buttonSearch) return;
-
   const OFERTA_DESCRIPCIONES = {
     "aceleracion primer servicio":
       "Contacta al cliente con urgencia por perder garantía. Ofrece Reactivación de garantía al realizar su servicio. Código: REACTIVACION.",
