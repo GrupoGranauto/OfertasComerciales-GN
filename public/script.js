@@ -1,10 +1,79 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // =========================
-  // AUTH (Google Sign-In) — SIMPLE (solo dominio)
-  // =========================
-  const LS_TOKEN_KEY = "ga_id_token";
-  const LS_USER_KEY = "ga_user";
+// =========================
+// AUTH (Google Sign-In) — SIMPLE (solo dominio)
+// IMPORTANTE: el callback debe existir en window ANTES de que Google lo use.
+// =========================
+const LS_TOKEN_KEY = "ga_id_token";
+const LS_USER_KEY = "ga_user";
 
+function getToken() {
+  return localStorage.getItem(LS_TOKEN_KEY) || "";
+}
+function setToken(token) {
+  if (!token) localStorage.removeItem(LS_TOKEN_KEY);
+  else localStorage.setItem(LS_TOKEN_KEY, token);
+}
+function setCachedUser(user) {
+  if (!user) localStorage.removeItem(LS_USER_KEY);
+  else localStorage.setItem(LS_USER_KEY, JSON.stringify(user));
+}
+function getCachedUser() {
+  try {
+    const raw = localStorage.getItem(LS_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ✅ Callback global que Google Identity llama (por data-callback)
+window.handleCredentialResponse = async function (response) {
+  try {
+    const idToken = response?.credential;
+    if (!idToken) throw new Error("No credential");
+
+    // Guarda token
+    setToken(idToken);
+
+    // Valida contra backend (aquí se filtra dominio)
+    const res = await fetch("/api/me", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        Accept: "application/json",
+      },
+    });
+
+    const me = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      // Forzar limpieza
+      setToken("");
+      setCachedUser(null);
+
+      // Mostrar error claro (403 = dominio no permitido)
+      const msg =
+        me?.error ||
+        (res.status === 403
+          ? "Dominio no permitido. Usa tu cuenta @grupogranauto.mx"
+          : "No autorizado. Verifica tu cuenta.");
+      alert(msg);
+
+      return;
+    }
+
+    setCachedUser(me);
+
+    // Refresca para que la UI se desbloquee y cierre el modal
+    location.reload();
+  } catch (err) {
+    console.error("handleCredentialResponse error:", err);
+    setToken("");
+    setCachedUser(null);
+    alert("No autorizado. Usa tu cuenta @grupogranauto.mx");
+  }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  // ====== ELEMENTOS AUTH UI ======
   const authModal = document.getElementById("auth-modal");
   const appWrap = document.getElementById("app-wrap");
   const btnLogout = document.getElementById("btn-logout");
@@ -13,59 +82,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const userAvatarEl = document.getElementById("user-avatar");
   const permHint = document.getElementById("perm-hint");
 
-  const inputVIN = document.getElementById("vin-input");
-  const buttonSearch = document.getElementById("btn-buscar");
-
-  const resultsSection = document.querySelector("#results");
-  const resultsContent = document.querySelector(".results-content");
-  const noResultsBox = document.querySelector(".no-results");
-  const mainTitle = document.querySelector(".main-offer-title");
-  const mainDescription = document.querySelector(".main-offer-description");
-  const otherOffersGrid = document.querySelector(".other-offers-grid");
-  const statusEl = document.querySelector(".status-cliente");
-
-  if (!inputVIN || !buttonSearch) return;
-
   function openAuthModal() {
     authModal?.classList.remove("hidden");
     appWrap?.classList.add("blur-on");
   }
-
   function closeAuthModal() {
     authModal?.classList.add("hidden");
     appWrap?.classList.remove("blur-on");
   }
 
-  function getToken() {
-    return localStorage.getItem(LS_TOKEN_KEY) || "";
-  }
-
-  function setToken(token) {
-    if (!token) localStorage.removeItem(LS_TOKEN_KEY);
-    else localStorage.setItem(LS_TOKEN_KEY, token);
-  }
-
-  function setCachedUser(user) {
-    if (!user) localStorage.removeItem(LS_USER_KEY);
-    else localStorage.setItem(LS_USER_KEY, JSON.stringify(user));
-  }
-
-  function getCachedUser() {
-    try {
-      const raw = localStorage.getItem(LS_USER_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  }
-
   function setAppLocked(locked) {
-    // Bloquear búsqueda hasta que haya sesión
     inputVIN.disabled = locked;
     buttonSearch.disabled = locked;
     permHint?.classList.toggle("hidden", !locked);
-
-    // Modal + blur
     if (locked) openAuthModal();
     else closeAuthModal();
   }
@@ -103,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const res = await fetch(url, { ...options, headers });
 
-    // Si token inválido/expirado o dominio no permitido, forzar logout
+    // Si token inválido/expirado o dominio no permitido
     if (res.status === 401 || res.status === 403) {
       setToken("");
       setCachedUser(null);
@@ -136,34 +165,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ✅ Callback global que Google Identity llama (lo necesita el HTML por data-callback)
-  window.handleCredentialResponse = async function (response) {
-    try {
-      setToken(response.credential);
-
-      // Validar contra backend (aquí se aplica el filtro @grupogranauto.mx)
-      const res = await fetch("/api/me", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${response.credential}`,
-          Accept: "application/json",
-        },
-      });
-
-      const me = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(me?.error || `HTTP ${res.status}`);
-
-      setCachedUser(me);
-      location.reload();
-    } catch (err) {
-      console.error("handleCredentialResponse error:", err);
-      setToken("");
-      setCachedUser(null);
-      alert("No autorizado. Usa tu correo @grupogranauto.mx");
-      applyUserUI(null);
-    }
-  };
-
   // Logout
   btnLogout?.addEventListener("click", () => {
     setToken("");
@@ -172,8 +173,19 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // =========================
-  // LÓGICA DE OFERTAS (tu código) + AUTH
+  // TU CÓDIGO (Ofertas)
   // =========================
+  const inputVIN = document.getElementById("vin-input");
+  const buttonSearch = document.getElementById("btn-buscar");
+  const resultsSection = document.querySelector("#results");
+  const resultsContent = document.querySelector(".results-content");
+  const noResultsBox = document.querySelector(".no-results");
+  const mainTitle = document.querySelector(".main-offer-title");
+  const mainDescription = document.querySelector(".main-offer-description");
+  const otherOffersGrid = document.querySelector(".other-offers-grid");
+  const statusEl = document.querySelector(".status-cliente");
+  if (!inputVIN || !buttonSearch) return;
+
   const OFERTA_DESCRIPCIONES = {
     "aceleracion primer servicio":
       "Contacta al cliente con urgencia por perder garantía. Ofrece Reactivación de garantía al realizar su servicio. Código: REACTIVACION.",
@@ -216,7 +228,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function getDescripcionOferta(nombre) {
     const key = normalizarTexto(nombre);
     if (OFERTA_DESCRIPCIONES[key]) return OFERTA_DESCRIPCIONES[key];
-
     for (const [pattern, desc] of Object.entries(OFERTA_DESCRIPCIONES)) {
       if (key.includes(pattern) || pattern.includes(key)) return desc;
     }
@@ -226,7 +237,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function getImagenOferta(nombre) {
     const key = normalizarTexto(nombre);
     if (OFERTA_IMAGENES[key]) return OFERTA_IMAGENES[key];
-
     for (const [pattern, img] of Object.entries(OFERTA_IMAGENES)) {
       if (key.includes(pattern) || pattern.includes(key)) return img;
     }
@@ -263,10 +273,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setLoading(isLoading) {
-    // Respeta bloqueo por auth
-    if (!inputVIN.disabled) {
-      buttonSearch.disabled = isLoading;
-    }
+    if (!inputVIN.disabled) buttonSearch.disabled = isLoading;
     buttonSearch.textContent = isLoading ? "Buscando..." : "Buscar Ofertas";
   }
 
@@ -343,7 +350,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function buscar() {
-    // Si está bloqueado por auth, no hacer nada
     if (inputVIN.disabled) {
       openAuthModal();
       return;
@@ -353,7 +359,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!ok) return showNoResults(msg);
 
     setLoading(true);
-
     try {
       const res = await authFetch(`/api/ofertas?vin=${encodeURIComponent(vin)}`, { method: "GET" });
 
@@ -364,7 +369,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
-        // Si el backend devuelve 401/403, authFetch ya limpió y abrió modal
         return showNoResults(j.error || "Ocurrió un error al consultar las ofertas.");
       }
 
@@ -379,7 +383,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Eventos
   buttonSearch.addEventListener("click", buscar);
   inputVIN.addEventListener("keydown", (e) => {
     if (e.key === "Enter") buscar();
@@ -388,12 +391,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================
   // INIT AUTH
   // =========================
-  // Estado inicial: bloquea si no hay token; si hay token intenta cargar /api/me
   const cached = getCachedUser();
   if (!getToken()) {
     applyUserUI(null);
   } else if (cached) {
-    // pinta algo rápido y valida después
     applyUserUI(cached);
     loadMe();
   } else {
