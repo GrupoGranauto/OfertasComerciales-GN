@@ -78,6 +78,7 @@ const PROJECT_TABLE = `${PROJECT_ID}.${DATASET}.${TABLE}`;
 
 // ✅ NUEVO: tabla control usuarios
 const CONTROL_TABLE = `${PROJECT_ID}.${DATASET}.control_usuarios`;
+const TZ = "America/Hermosillo";
 
 console.log("PROJECT_ID     =>", PROJECT_ID);
 console.log("KEYFILE        =>", KEYFILE);
@@ -169,18 +170,29 @@ function authRequired(req, res, next) {
 // =============================
 // ✅ NUEVO: Registrar uso en BigQuery
 // =============================
-async function logUso({ email, nombre }) {
-  const q = `
-    INSERT INTO \`${CONTROL_TABLE}\` (email, nombre, uso, fecha, fecha_hora)
-    VALUES (@email, @nombre, 1, CURRENT_DATE(), CURRENT_TIMESTAMP())
+// =============================
+// ✅ Registrar uso en BigQuery (Hora Hermosillo)
+// =============================
+async function logUso({ email, name }) {
+  const query = `
+    INSERT INTO \`${CONTROL_TABLE}\`
+    (email, nombre, uso, fecha, fecha_hora)
+    VALUES (
+      @email,
+      @nombre,
+      1,
+      CURRENT_DATE(@tz),
+      -- Convierte correctamente a hora de Hermosillo aunque la columna sea TIMESTAMP
+      TIMESTAMP(DATETIME(CURRENT_TIMESTAMP(), @tz))
+    )
   `;
 
-  // Nota: createQueryJob es async, pero no necesitas leer resultados
   await bq.createQueryJob({
-    query: q,
+    query,
     params: {
       email: String(email || "").toLowerCase(),
-      nombre: String(nombre || ""),
+      nombre: String(name || ""),
+      tz: "America/Hermosillo",
     },
   });
 }
