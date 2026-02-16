@@ -4,16 +4,33 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ofertas Comerciales</title>
+
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
   <link rel="icon" href="./images/default.png" type="image/png" target="_blank"/>
   <link rel="stylesheet" href="./styles.css" />
+
+  <style>
+    /* ✅ Blur cuando el modal de auth está activo */
+    .blur-on {
+      filter: blur(6px);
+      transform: scale(0.995);
+      transition: filter 180ms ease, transform 180ms ease;
+      pointer-events: none;
+      user-select: none;
+    }
+  </style>
 </head>
+
 <body class="app-body font-display">
-  <div class="relative flex min-h-screen w-full flex-col">
+  <!-- ✅ APP WRAP (para aplicar blur cuando haya modal) -->
+  <div id="app-wrap" class="relative flex min-h-screen w-full flex-col">
     <header class="app-header flex items-center justify-between whitespace-nowrap px-6 sm:px-10 lg:px-20 py-4">
       <div class="flex items-center gap-3 text-white">
         <div class="header-icon">
@@ -21,8 +38,31 @@
             <img src="./images/LogoGrupo.png" alt="Logo Grupo Granauto" />
           </a>
         </div>
-    </div>
+      </div>
+
+      <!-- ✅ HEADER AUTH: usuario + avatar + logout -->
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex flex-col items-end leading-tight">
+          <span id="user-name" class="text-xs font-bold text-white hidden"></span>
+          <span id="user-email" class="text-[10px] font-semibold text-white/80 hidden"></span>
+        </div>
+
+        <img
+          id="user-avatar"
+          class="hidden h-9 w-9 rounded-full border-2 border-white/70 object-cover"
+          alt="Foto de perfil"
+        />
+
+        <button
+          id="btn-logout"
+          class="hidden border-2 border-white/80 px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all text-white"
+          type="button"
+        >
+          Salir
+        </button>
+      </div>
     </header>
+
     <main class="flex h-full grow flex-col">
       <div class="px-4 py-16 sm:px-10 lg:px-20 flex flex-1 justify-center">
         <div class="flex flex-col w-full max-w-5xl flex-1">
@@ -38,7 +78,13 @@
                 Ingrese el Número de Identificación Vehicular (VIN) para encontrar ofertas comerciales relevantes y
                 personalizadas para su vehículo.
               </p>
+
+              <!-- ✅ Hint de permisos -->
+              <p id="perm-hint" class="text-[11px] font-semibold text-white/80 hidden">
+                Inicia sesión con tu cuenta @grupogranauto.mx para consultar ofertas.
+              </p>
             </div>
+
             <div class="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-xl">
               <div class="vin-input flex w-full flex-1 items-stretch rounded-lg h-14 focus-within:ring-2">
                 <div class="vin-input-icon flex items-center justify-center pl-4">
@@ -48,8 +94,10 @@
                   id="vin-input"
                   class="vin-input-field form-input flex w/full min-w-0 flex-1 resize-none overflow-hidden rounded-lg focus:outline-0 focus:ring-0 border-0 bg-transparent h-full px-3 text-sm font-normal leading-normal"
                   maxlength="17"
-                  placeholder="Ingrese el VIN de 17 caracteres"/>
+                  placeholder="Ingrese el VIN de 17 caracteres"
+                />
               </div>
+
               <button
                 id="btn-buscar"
                 class="primary-button flex w-full sm:w-auto min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 px-8 text-base font-bold leading-normal tracking-[0.015em] transition-colors"
@@ -58,6 +106,7 @@
               </button>
             </div>
           </section>
+
           <section id="results" class="mt-16 hidden">
             <div class="results-content flex flex-col gap-12">
               <div>
@@ -89,6 +138,7 @@
                   </div>
                 </div>
               </div>
+
               <div>
                 <h3 class="section-subtitle text-xl font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">
                   Otras Ofertas Disponibles
@@ -116,6 +166,7 @@
                 </div>
               </div>
             </div>
+
             <div class="no-results hidden flex-col items-center justify-center text-center p-10 mt-12 rounded-xl border">
               <span class="material-symbols-outlined text-5xl no-results-icon">search_off</span>
               <h3 class="no-results-title text-xl font-bold mt-4">No se encontraron ofertas</h3>
@@ -127,7 +178,8 @@
         </div>
       </div>
     </main>
-    <footer class="app-footer w-full mt-auto relative"> 
+
+    <footer class="app-footer w-full mt-auto relative">
       <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center">
         <p class="footer-text text-sm">
           ©2026
@@ -138,12 +190,56 @@
         </p>
       </div>
 
-      <!-- Derecha (pegado al final del footer) -->
       <p class="footer-text text-sm opacity-80 absolute right-4 sm:right-6 lg:right-8 top-1/2 -translate-y-1/2">
-        Fecha de última actualización: 2026-02-07
+        Fecha de última actualización: 2026-02-16
       </p>
     </footer>
   </div>
+
+  <!-- ✅ MODAL LOGIN (Google Sign-In) -->
+  <div id="auth-modal" class="fixed inset-0 z-[60] hidden">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/50"></div>
+
+    <!-- Modal box -->
+    <div class="relative h-full w-full flex items-center justify-center p-4">
+      <div class="w-full max-w-md bg-white border-2 border-black p-8 rounded-xl">
+        <div class="space-y-2 mb-6">
+          <h2 class="text-xl font-black uppercase tracking-tight text-black">Iniciar sesión</h2>
+          <p class="text-sm text-zinc-600 font-medium">
+            Para consultar ofertas comerciales, inicia sesión con tu cuenta de Google.
+          </p>
+        </div>
+
+        <!-- Google Identity -->
+        <div
+          id="g_id_onload"
+          data-client_id="PEGA_AQUI_TU_GOOGLE_CLIENT_ID"
+          data-callback="handleCredentialResponse"
+          data-auto_prompt="false">
+        </div>
+
+        <div
+          class="g_id_signin"
+          data-type="standard"
+          data-size="large"
+          data-theme="outline"
+          data-text="signin_with"
+          data-shape="rectangular"
+          data-logo_alignment="left">
+        </div>
+
+        <p class="mt-6 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+          Solo cuentas autorizadas (grupogranauto.mx)
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Google Identity Services (Sign-In) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Tu JS -->
   <script src="./script.js"></script>
 </body>
 </html>

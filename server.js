@@ -1,17 +1,69 @@
 // server.js
 // API: GET /api/ofertas?vin=XXXXXXXXXXXXXXXXX (17 caracteres)
+// Protegido por Google Sign-In (solo @grupogranauto.mx)
 
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { BigQuery } from "@google-cloud/bigquery";
+import { OAuth2Client } from "google-auth-library";
 
 const app = express();
-app.use(cors());
 app.use(express.json());
 
 // =============================
-// Configuración desde .env
+// Seguridad / CSP (Google Sign-In)
+// =============================
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://cdn.tailwindcss.com",
+          "https://accounts.google.com",
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://cdn.tailwindcss.com",
+          "https://fonts.googleapis.com",
+          "https://accounts.google.com",
+        ],
+        imgSrc: ["'self'", "data:", "https://lh3.googleusercontent.com"],
+        connectSrc: ["'self'", "https://accounts.google.com", "https://www.googleapis.com"],
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+        frameSrc: ["'self'", "https://accounts.google.com"],
+      },
+    },
+  })
+);
+
+// =============================
+// CORS (si sirves frontend desde el mismo server, puedes quitarlo)
+// =============================
+// Si tu frontend está en el mismo dominio/puerto, cors() no es necesario.
+// Si lo necesitas (frontend separado), limita el origin en .env con FRONTEND_ORIGIN.
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "";
+if (FRONTEND_ORIGIN) {
+  app.use(
+    cors({
+      origin: FRONTEND_ORIGIN,
+      credentials: false,
+    })
+  );
+} else {
+  // fallback (dev). Puedes comentar esto en prod si no lo necesitas.
+  app.use(cors());
+}
+
+// =============================
+// Configuración desde .env (BigQuery)
 // =============================
 const PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
 
@@ -49,7 +101,7 @@ if (!KEYFILE && !KEYJSON) {
 const bqConfig = { projectId: PROJECT_ID };
 
 if (KEYJSON) {
-  // Producción (Railway): el contenido del JSON en una variable
+  // Producción: el contenido del JSON en una variable
   try {
     bqConfig.credentials = JSON.parse(KEYJSON);
   } catch (e) {
@@ -58,10 +110,61 @@ if (KEYJSON) {
   }
 } else {
   // Desarrollo local: archivo físico
-  bqConfig.keyFilename = KEYFILE; // ./Credentials/credencialesAI.json
+  bqConfig.keyFilename = KEYFILE;
 }
 
 const bq = new BigQuery(bqConfig);
+
+// =============================
+// AUTH (Google Sign-In) — Solo dominio
+// =============================
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const ALLOWED_DOMAIN = "grupogranauto.mx";
+const oauthClient = new OAuth2Client(GOOGLE_CLIENT_ID);
+
+function authRequired(req, res, next) {
+  (async () => {
+    try {
+      const auth = req.headers.authorization || "";
+      const m = auth.match(/^Bearer\s+(.+)$/i);
+      if (!m) return res.status(401).json({ error: "No autenticado" });
+
+      if (!GOOGLE_CLIENT_ID) {
+        return res.status(500).json({ error: "Falta GOOGLE_CLIENT_ID en env" });
+      }
+
+      const idToken = m[1];
+
+      const ticket = await oauthClient.verifyIdToken({
+        idToken,
+        audience: GOOGLE_CLIENT_ID,
+      });
+
+      const payload = ticket.getPayload();
+      const email = (payload?.email || "").toLowerCase();
+      const emailVerified = payload?.email_verified;
+      const hd = (payload?.hd || "").toLowerCase();
+
+      if (!emailVerified) return res.status(401).json({ error: "Email no verificado" });
+
+      const emailDomain = email.split("@")[1]?.toLowerCase() || "";
+      if (emailDomain !== ALLOWED_DOMAIN && hd !== ALLOWED_DOMAIN) {
+        return res.status(403).json({ error: "Dominio no permitido" });
+      }
+
+      req.user = {
+        email,
+        name: payload?.name || "",
+        picture: payload?.picture || "",
+      };
+
+      next();
+    } catch (e) {
+      console.error("authRequired error:", e);
+      return res.status(401).json({ error: "Token inválido" });
+    }
+  })();
+}
 
 // =============================
 // Rutas
@@ -70,11 +173,16 @@ const bq = new BigQuery(bqConfig);
 // Health check
 app.get("/healthz", (_req, res) => res.status(200).send("ok"));
 
-// GET /api/ofertas?vin=XXXXXXXXXXXXXXXXX
-app.get("/api/ofertas", async (req, res) => {
+// ✅ Auth probe: el frontend la usa para validar sesión
+app.get("/api/me", authRequired, (req, res) => {
+  res.json(req.user);
+});
+
+// ✅ GET /api/ofertas?vin=XXXXXXXXXXXXXXXXX (PROTEGIDO)
+app.get("/api/ofertas", authRequired, async (req, res) => {
   try {
     const vin = (req.query.vin || "").toString().trim();
-    console.log(">> /api/ofertas llamado con VIN:", vin);
+    console.log(">> /api/ofertas llamado con VIN:", vin, "by:", req.user?.email);
 
     if (!vin) {
       return res.status(400).json({ error: "vin requerido" });
@@ -85,7 +193,6 @@ app.get("/api/ofertas", async (req, res) => {
       return res.status(400).json({ error: "vin inválido" });
     }
 
-    // ✅ Ahora también traemos status_cliente_principal
     const query = `
       SELECT
         vin,
@@ -116,12 +223,9 @@ app.get("/api/ofertas", async (req, res) => {
     // =============================
     // Normalización de datos
     // =============================
-
-    // Puede venir como oferta_principal (alias) o directo como *_r
     const principalRaw = row.oferta_principal ?? row.oferta_principal_r ?? "";
     const principal = principalRaw.toString().trim();
 
-    // Ofertas: puede venir como string, JSON, array, etc.
     let ofertas = row.ofertas ?? row.ofertas_r ?? [];
 
     if (typeof ofertas === "string") {
@@ -145,7 +249,6 @@ app.get("/api/ofertas", async (req, res) => {
       ofertas = [String(ofertas)].filter(Boolean);
     }
 
-    // Regla: si alguna oferta es igual a la principal, se elimina del arreglo
     const pcmp = principal.toLowerCase();
     const others = ofertas.filter(
       (o) => (o ?? "").toString().trim().toLowerCase() !== pcmp
@@ -156,16 +259,13 @@ app.get("/api/ofertas", async (req, res) => {
       found: true,
       oferta_principal: principal || null,
       ofertas: others,
-      // ✅ Enviamos el status al frontend
       status_cliente_principal: row.status_cliente_principal || null,
     };
 
     return res.json(payload);
   } catch (err) {
     console.error("❌ Error en /api/ofertas:", err);
-    return res
-      .status(500)
-      .json({ error: "Error interno", detail: String(err) });
+    return res.status(500).json({ error: "Error interno", detail: String(err) });
   }
 });
 
@@ -180,4 +280,5 @@ app.use(express.static("public"));
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`API listening on port ${PORT}`);
+  console.log(`Auth domain allowed: @${ALLOWED_DOMAIN}`);
 });
