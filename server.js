@@ -232,7 +232,7 @@ app.get("/api/ofertas", authRequired, async (req, res) => {
     // Si quieres registrar SOLO cuando el VIN sea válido, mueve este bloque
     // después de las validaciones.
     try {
-      await logUso({ email: req.user?.email, nombre: req.user?.name });
+      await logUso({ email: req.user?.email, name: req.user?.name });
     } catch (e) {
       console.error("⚠️ No se pudo registrar en control_usuarios:", e);
     }
