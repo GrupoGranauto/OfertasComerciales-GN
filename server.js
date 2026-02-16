@@ -142,20 +142,32 @@ function authRequired(req, res, next) {
       });
 
       const payload = ticket.getPayload();
+
       const email = (payload?.email || "").toLowerCase();
       const emailVerified = payload?.email_verified;
       const hd = (payload?.hd || "").toLowerCase();
 
-      if (!emailVerified) return res.status(401).json({ error: "Email no verificado" });
+      if (!emailVerified) {
+        return res.status(401).json({ error: "Email no verificado" });
+      }
 
       const emailDomain = email.split("@")[1]?.toLowerCase() || "";
       if (emailDomain !== ALLOWED_DOMAIN && hd !== ALLOWED_DOMAIN) {
         return res.status(403).json({ error: "Dominio no permitido" });
       }
 
+      // ✅ Construcción robusta del nombre
+      const fullName =
+        payload?.name ||
+        [payload?.given_name, payload?.family_name]
+          .filter(Boolean)
+          .join(" ")
+          .trim() ||
+        email.split("@")[0];
+
       req.user = {
         email,
-        name: payload?.name || "",
+        name: fullName,
         picture: payload?.picture || "",
       };
 
